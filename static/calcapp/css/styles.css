@@ -1,0 +1,228 @@
+/* Apply box-sizing to all elements */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #778da0;
+    /* Main background color */
+    color: #ffffff;
+    /* White text for contrast */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+h1,
+h2 {
+    color: #ffffff;
+    text-align: center;
+    font-size: 1.8rem;
+    /* Larger font size for headings */
+}
+
+p {
+    font-size: 1.2rem;
+    /* Larger font size for paragraphs */
+    text-align: center;
+    color: #f4f4f9;
+    margin: 10px 0;
+}
+
+a {
+    text-decoration: none;
+    color: #fff;
+    background-color: #5a6f80;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+a:hover {
+    background-color: #4a5d70;
+}
+
+form {
+    background-color: rgba(255, 255, 255, 0.1);
+    /* Semi-transparent white */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    /* Full width on larger screens */
+    max-width: 600px;
+    /* Increased max-width */
+    text-align: center;
+    margin: 20px auto;
+    /* Center the form */
+}
+
+input[type="text"],
+input[type="number"],
+select {
+    width: 100%;
+    /* Full width of the container */
+    padding: 10px;
+    margin: 10px 0;
+    /* Consistent spacing between elements */
+    border: 1px solid #9db3c2;
+    /* Lighter blue-gray border */
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.2);
+    /* Semi-transparent input background */
+    color: #ffffff;
+    /* White text */
+    font-size: 1rem;
+    /* Consistent font size */
+    box-sizing: border-box;
+    /* Ensure padding doesn't affect width */
+}
+
+input:focus,
+select:focus {
+    border-color: #4CAF50;
+    /* Green border on focus */
+    outline: none;
+}
+
+button {
+    background-color: #5a6f80;
+    /* Darker blue-gray */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    width: 100%;
+    /* Full width to match input fields */
+    margin-top: 10px;
+    /* Space between last input and button */
+}
+
+button:hover {
+    background-color: #4a5d70;
+}
+
+/* Quote Box Styling */
+#quote-box {
+    background-color: rgba(255, 255, 255, 0.1);
+    /* Semi-transparent white */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    width: 90%;
+    /* Full width on larger screens */
+    max-width: 600px;
+    /* Increased max-width */
+    transition: transform 0.3s ease-in-out;
+}
+
+#quote-box h2 {
+    font-size: 1.5rem;
+    /* Larger font size for quote heading */
+    margin-bottom: 10px;
+}
+
+#quote-box p {
+    font-size: 1.2rem;
+    /* Larger font size for quote text */
+    margin: 10px 0;
+}
+
+/* Weather Section Styling */
+.weather-section {
+    text-align: center;
+    margin-top: 20px;
+    width: 90%;
+    /* Full width on larger screens */
+    max-width: 600px;
+    /* Increased max-width */
+}
+
+.weather-section h1 {
+    font-size: 1.5rem;
+    /* Larger font size for weather heading */
+    margin-bottom: 10px;
+}
+
+.weather-section p {
+    font-size: 1rem;
+    /* Larger font size for weather text */
+    margin: 5px 0;
+}
+
+/* Add spacing below the To-Do List button */
+.todo-button {
+    margin-bottom: 40px;
+    /* Adjust as needed */
+}
+
+/* Responsive Design for Mobile */
+@media (max-width: 600px) {
+    body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 20px;
+    }
+
+    h1,
+    h2 {
+        font-size: 1.5rem;
+        /* Reduce heading size */
+    }
+
+    p {
+        font-size: 1rem;
+        /* Increase paragraph text size */
+    }
+
+
+    .weather-section {
+        width: 100%;
+        /* Full width on small screens */
+        padding: 15px;
+        /* Reduce padding */
+    }
+
+    #quote-box h2 {
+        font-size: 1.2rem;
+        /* Reduce quote heading size */
+    }
+
+    #quote-box p {
+        font-size: 1rem;
+        /* Adjust quote text size */
+    }
+
+    #quote-box {
+        order: -1;
+        /* Moves the quote box to the top */
+        margin-top: 0;
+        /* Remove top margin */
+    }
+
+    .weather-section h1 {
+        font-size: 1.2rem;
+        /* Reduce weather heading size */
+    }
+
+    .weather-section p {
+        font-size: 0.9rem;
+        /* Adjust weather text size */
+    }
+}

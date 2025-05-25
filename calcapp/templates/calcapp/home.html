@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Home</title>
+    <link rel="shortcut icon" href="{% static 'calcapp/favicon/favicon.ico' %}" type="image/x-icon">
+    <link rel="stylesheet" href="{% static 'calcapp/css/styles.css' %}">
+</head>
+
+<body>
+
+    <div id="quote-box">
+        <h2>Inspiration for Today:</h2>
+        <p><em>"{{ quote.text }}"</em></p>
+        <p>- {{ quote.author }}</p>
+    </div>
+
+
+    <div class="weather-section"></div>
+    <h1>Weather in {{ weather.name }}</h1>
+    {% if weather.main and weather.main.temp %}
+    <p>Temperature: {{ weather.main.temp }}°C</p>
+    {% else %}
+    <p>Temperature: N/A</p>
+    {% endif %}
+    </div>
+    {% if weather.weather %}
+    <p>
+        Weather: {{ weather.weather.0.description }}
+        <br>
+        <!-- Display the weather icon -->
+        <img src="http://openweathermap.org/img/wn/{{ weather.weather.0.icon }}@2x.png"
+            alt="{{ weather.weather.0.description }}">
+    </p>
+    {% else %}
+    <p>Weather: N/A</p>
+    {% endif %}
+
+    <h2>Options</h2>
+    <a href="{% url 'calc' %}">Go to Calculator </a><br>
+    <a href="{% url 'todolist' %}" class="todo-button">To-Do List</a>
+
+
+    <script>
+        // Function to fetch a new quote dynamically
+        async function fetchNewQuote() {
+            try {
+                const response = await fetch("{% url 'home' %}", {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await response.json();
+
+                // Update the quote box with the new quote
+                document.getElementById("quote-box").innerHTML = `
+                    <h2>Inspiration for Today:</h2>
+                    <p><em>"${data.text}"</em></p>
+                    <p>- ${data.author}</p>
+                `;
+            } catch (error) {
+                console.error("Error fetching new quote:", error);
+            }
+        }
+
+        // Fetch a new quote every 10 seconds
+        setInterval(fetchNewQuote, 10000);
+    </script>
+
+
+
+</body>
+
+</html>
