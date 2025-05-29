@@ -1,73 +1,94 @@
+{% extends 'calcapp/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html>
 
-<head>
-    <title>Home</title>
-    <link rel="shortcut icon" href="{% static 'calcapp/favicon/favicon.ico' %}" type="image/x-icon">
-    <link rel="stylesheet" href="{% static 'calcapp/css/styles.css' %}">
-</head>
+{% block title %}Home{% endblock %}
+{% block header_title %}MultiApp{% endblock %}
 
-<body>
+{% block content %}
+<!-- Holiday Section -->
+{% if holidays %}
+    <section class="holiday-section mb-3">
+        <div class="content text-center mx-auto">
+            <h2 class="section-title text-center">Today’s Celebrations</h2>
+            {% for holiday in holidays %}
+                <div class="card bg-dark text-light mb-2 mx-auto">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ holiday.name }}</h5>
+                        <p class="card-text">Celebrated in {{ holiday.country }}</p>
+                        <p class="card-text text-muted">
+                            <small>Date: {{ today|date:"Y-m-d" }}</small>
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
 
-    <div id="quote-box">
-        <h2>Inspiration for Today:</h2>
-        <p><em>"{{ quote.text }}"</em></p>
-        <p>- {{ quote.author }}</p>
+<!-- Quote Section -->
+<section class="quote-section mb-3">
+    <div id="quote-box" class="card bg-dark text-light mx-auto">
+        <h2 class="card-title text-center">Inspiration for Today</h2>
+        <blockquote class="blockquote text-center">
+            <p class="mb-0">"{{ quote.text }}"</p>
+            <footer class="blockquote-footer text-light mt-2">— {{ quote.author }}</footer>
+        </blockquote>
     </div>
+</section>
 
-
-    <div class="weather-section"></div>
-    <h1>Weather in {{ weather.name }}</h1>
-    {% if weather.main and weather.main.temp %}
-    <p>Temperature: {{ weather.main.temp }}°C</p>
-    {% else %}
-    <p>Temperature: N/A</p>
-    {% endif %}
+<!-- Weather Section -->
+<section class="weather-section mb-3">
+    <div class="weather-content text-center mx-auto">
+        <h2 class="section-title text-center">Weather in {{ weather.name }}</h2>
+        {% if weather.main and weather.main.temp != 'N/A' %}
+            <p class="mb-1">Temperature: {{ weather.main.temp }}°C</p>
+        {% else %}
+            <p class="mb-1">Temperature: N/A</p>
+        {% endif %}
+        {% if weather.weather and weather.weather.0.icon != 'unknown' %}
+            <p class="mb-0">
+                Weather: {{ weather.weather.0.description }}
+                <br>
+                <img src="http://openweathermap.org/img/wn/{{ weather.weather.0.icon }}@2x.png" alt="{{ weather.weather.0.description }}" class="weather-icon">
+            </p>
+        {% else %}
+            <p class="mb-0">Weather: N/A</p>
+        {% endif %}
     </div>
-    {% if weather.weather %}
-    <p>
-        Weather: {{ weather.weather.0.description }}
-        <br>
-        <!-- Display the weather icon -->
-        <img src="http://openweathermap.org/img/wn/{{ weather.weather.0.icon }}@2x.png"
-            alt="{{ weather.weather.0.description }}">
-    </p>
-    {% else %}
-    <p>Weather: N/A</p>
-    {% endif %}
+</section>
 
-    <h2>Options</h2>
-    <a href="{% url 'calc' %}">Go to Calculator </a><br>
-    <a href="{% url 'todolist' %}" class="todo-button">To-Do List</a>
+<!-- Options Section -->
+<section class="options-section mb-3">
+    <div class="options-content text-center mx-auto">
+        <h2 class="section-title text-center">Options</h2>
+        <div class="d-flex flex-column gap-2 align-items-center">
+            <a href="{% url 'calc' %}" class="btn btn-primary option-btn">Go to Calculator</a>
+            <a href="{% url 'todolist' %}" class="btn btn-primary option-btn">To-Do List</a>
+            <a href="{% url 'currency' %}" class="btn btn-primary option-btn">Currency Converter</a>
+            <a href="{% url 'news' %}" class="btn btn-primary option-btn">News Headlines</a>
+            <a href="{% url 'tictactoe' %}" class="btn btn-primary option-btn">Tic-Tac-Toe</a>
+        </div>
+    </div>
+</section>
 
-
-    <script>
-        // Function to fetch a new quote dynamically
-        async function fetchNewQuote() {
-            try {
-                const response = await fetch("{% url 'home' %}", {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                });
-                const data = await response.json();
-
-                // Update the quote box with the new quote
-                document.getElementById("quote-box").innerHTML = `
-                    <h2>Inspiration for Today:</h2>
-                    <p><em>"${data.text}"</em></p>
-                    <p>- ${data.author}</p>
-                `;
-            } catch (error) {
-                console.error("Error fetching new quote:", error);
-            }
+<script>
+    async function fetchNewQuote() {
+        try {
+            const response = await fetch("{% url 'home' %}", {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const data = await response.json();
+            document.getElementById("quote-box").innerHTML = `
+                <h2 class="card-title text-center">Inspiration for Today</h2>
+                <blockquote class="blockquote text-center">
+                    <p class="mb-0">"${data.text}"</p>
+                    <footer class="blockquote-footer text-light mt-2">— ${data.author}</footer>
+                </blockquote>
+            `;
+        } catch (error) {
+            console.error("Error fetching new quote:", error);
         }
-
-        // Fetch a new quote every 10 seconds
-        setInterval(fetchNewQuote, 10000);
-    </script>
-
-
-
-</body>
-
-</html>
+    }
+    setInterval(fetchNewQuote, 10000);
+</script>
+{% endblock %}

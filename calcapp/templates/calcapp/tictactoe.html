@@ -1,0 +1,139 @@
+{% extends 'calcapp/base.html' %}
+{% load static %}
+
+{% block title %}Tic-Tac-Toe{% endblock %}
+{% block header_title %}Tic-Tac-Toe{% endblock %}
+
+{% block content %}
+<section class="tictactoe-section mb-3">
+    <div class="content text-center mx-auto" style="max-width: 400px;">
+        <h2 class="section-title text-center">Tic-Tac-Toe</h2>
+        <p class="text-muted mb-3">Play as X against a tough computer (O)</p>
+        <div id="status" class="alert alert-info mb-3">Your turn (X)!</div>
+        <div id="board" class="d-grid gap-2" style="grid-template-columns: repeat(3, 1fr); max-width: 300px; margin: auto;">
+            {% for i in "012345678" %}
+            <button class="btn btn-outline-light cell" style="height: 100px; font-size: 2rem;" data-index="{{ i }}"></button>
+            {% endfor %}
+        </div>
+        <button id="reset" class="btn btn-primary mt-3">Reset Game</button>
+        <div class="mt-3">
+            <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+</section>
+
+<script>
+    const board = Array(9).fill(null);
+    let currentPlayer = 'X';
+    const status = document.getElementById('status');
+    const cells = document.querySelectorAll('.cell');
+    const resetButton = document.getElementById('reset');
+
+    function checkWinner(boardState) {
+        const wins = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6] // Diagonals
+        ];
+        for (let [a, b, c] of wins) {
+            if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+                return boardState[a];
+            }
+        }
+        return boardState.every(cell => cell) ? 'Draw' : null;
+    }
+
+    function getAvailableMoves(boardState) {
+        return boardState.map((val, i) => val ? null : i).filter(val => val !== null);
+    }
+
+    function minimax(boardState, depth, isMaximizing) {
+        const result = checkWinner(boardState);
+        if (result) {
+            if (result === 'O') return { score: 10 - depth };
+            if (result === 'X') return { score: depth - 10 };
+            return { score: 0 };
+        }
+
+        if (isMaximizing) {
+            let best = { score: -Infinity, move: null };
+            for (let move of getAvailableMoves(boardState)) {
+                boardState[move] = 'O';
+                let score = minimax(boardState, depth + 1, false).score;
+                boardState[move] = null;
+                if (score > best.score) {
+                    best = { score, move };
+                }
+            }
+            return best;
+        } else {
+            let best = { score: Infinity, move: null };
+            for (let move of getAvailableMoves(boardState)) {
+                boardState[move] = 'X';
+                let score = minimax(boardState, depth + 1, true).score;
+                boardState[move] = null;
+                if (score < best.score) {
+                    best = { score, move };
+                }
+            }
+            return best;
+        }
+    }
+
+    function aiMove() {
+        const moves = getAvailableMoves(board);
+        if (moves.length) {
+            let move;
+            // 20% chance for random move
+            if (Math.random() < 0.2) {
+                move = moves[Math.floor(Math.random() * moves.length)];
+            } else {
+                // Optimal move via Minimax
+                let bestMove = minimax([...board], 0, true);
+                move = bestMove.move;
+            }
+            board[move] = 'O';
+            cells[move].textContent = 'O';
+            cells[move].disabled = true;
+            currentPlayer = 'X';
+            const winner = checkWinner(board);
+            if (winner) {
+                status.textContent = winner === 'Draw' ? "It's a draw!" : `${winner} wins!`;
+                cells.forEach(cell => cell.disabled = true);
+            } else {
+                status.textContent = "Your turn (X)!";
+            }
+        }
+    }
+
+    cells.forEach(cell => {
+        cell.addEventListener('click', () => {
+            if (currentPlayer === 'X' && !cell.textContent && !checkWinner(board)) {
+                const index = cell.dataset.index;
+                board[index] = 'X';
+                cell.textContent = 'X';
+                cell.disabled = true;
+                currentPlayer = 'O';
+                const winner = checkWinner(board);
+                if (winner) {
+                    status.textContent = winner === 'Draw' ? "It's a draw!" : `${winner} wins!`;
+                    cells.forEach(cell => cell.disabled = true);
+                } else {
+                    status.textContent = "Computer's turn (O)...";
+                    setTimeout(aiMove, 500);
+                }
+            }
+        });
+    });
+
+    resetButton.addEventListener('click', () => {
+        board.fill(null);
+        currentPlayer = 'X';
+        cells.forEach(cell => {
+            cell.textContent = '';
+            cell.disabled = false;
+        });
+        status.textContent = "Your turn (X)!";
+    });
+</script>
+{% endblock %}

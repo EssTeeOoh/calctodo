@@ -1,75 +1,38 @@
+{% extends 'calcapp/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html>
 
-<head>
-    <title>To-Do List</title>
-    <link rel="stylesheet" href="{% static 'calcapp/css/styles.css' %}">
-    <link rel="shortcut icon" href="{% static 'calcapp/favicon/favicon.ico' %}" type="image/x-icon">
-</head>
+{% block title %}To-Do List{% endblock %}
+{% block header_title %}To-Do List{% endblock %}
 
-<body>
-    <!-- Header -->
-    <header class="site-header">
-        <h1>To-Do List</h1>
-    </header>
-
-    <!-- Main Content -->
-    <main>
-        <!-- Add Task Form -->
-        <form method="post" class="styled-form">
+{% block content %}
+<section class="todo-section mb-3">
+    <div class="content text-center mx-auto">
+        <h2 class="section-title text-center">To-Do List</h2>
+        <form method="post" class="d-flex gap-2 mb-2">
             {% csrf_token %}
-            <input type="text" name="task" placeholder="Add a task" required>
-            <button type="submit">Add Task</button>
+            <input type="text" name="task" placeholder="Add a task" required class="form-control">
+            <button type="submit" class="btn btn-primary">Add Task</button>
         </form>
 
-        <!-- Task List -->
         <div class="task-list">
             {% if tasks %}
                 {% for task in tasks %}
-                <div class="todo-item">
-                    <!-- Task Description -->
-                    <p>{{ task.description }}</p>
-                    <!-- Delete Button -->
-                    <form method="post" action="{% url 'delete_task' task.id %}" class="delete-form">
+                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-secondary bg-opacity-25 rounded">
+                    <p class="mb-0">{{ task.description }}</p>
+                    <form method="post" action="{% url 'delete_task' task.id %}" class="d-inline">
                         {% csrf_token %}
-                        <button type="submit" class="delete-button">Delete</button>
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                     </form>
                 </div>
                 {% endfor %}
             {% else %}
-                <p class="no-tasks">No tasks yet!</p>
+                <p class="text-muted mb-1">No tasks yet!</p>
             {% endif %}
         </div>
 
-        <!-- Back to Home Link -->
-        <a href="{% url 'home' %}" class="back-link">Back to Home</a>
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-body-tertiary text-center text-lg-start">
-        <!-- Copyright -->
-        <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.05);">
-            © <span id="current-year">2020</span> Copyright:
-            <a class="text-body" href="https://mdbootstrap.com/">MDBootstrap.com</a>
+        <div>
+            <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
         </div>
-        <!-- Copyright -->
-    </footer>
-
-    <!-- JavaScript to Update Year -->
-    <script>
-        // Function to update the year dynamically
-        function updateCopyrightYear() {
-            const currentYear = new Date().getFullYear();
-            const yearElement = document.getElementById('current-year');
-            if (yearElement) {
-                yearElement.textContent = currentYear;
-            }
-        }
-
-        // Call the function when the page loads
-        document.addEventListener('DOMContentLoaded', updateCopyrightYear);
-    </script>
-</body>
-
-</html>
+    </div>
+</section>
+{% endblock %}

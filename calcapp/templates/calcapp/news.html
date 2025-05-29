@@ -1,0 +1,59 @@
+{% extends 'calcapp/base.html' %}
+{% load static %}
+
+{% block title %}News Headlines{% endblock %}
+{% block header_title %}News Headlines{% endblock %}
+
+{% block content %}
+<section class="news-section mb-3">
+    <div class="content text-center mx-auto">
+        <h2 class="section-title text-center">Top News Headlines</h2>
+        <!-- Filters -->
+        <div class="mb-3">
+            <div class="d-flex flex-wrap justify-content-center gap-2 mb-2">
+                {% for cat_value, cat_name in categories %}
+                    <a href="{% url 'news' %}?category={{ cat_value }}{% if current_country %}&country={{ current_country }}{% endif %}"
+                       class="btn {% if current_category == cat_value %}btn-primary{% else %}btn-secondary{% endif %} news-btn">
+                        {{ cat_name }}
+                    </a>
+                {% endfor %}
+            </div>
+           
+        </div>
+        <!-- News Articles -->
+        {% if error %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+                {% if error == "News API key is missing." %}
+                    <p>Please contact the administrator.</p>
+                {% else %}
+                    <p>Showing global news due to limited availability for the selected country.</p>
+                {% endif %}
+            </div>
+        {% elif articles %}
+            {% if current_country and not error %}
+                <p class="text-muted mb-2">Showing news for {{ current_country|default:"Global" }}.</p>
+            {% endif %}
+            {% for article in articles %}
+                <div class="card bg-dark text-light mb-3 mx-auto">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ article.title }}</h5>
+                        <p class="card-text">{{ article.description|truncatewords:20|default:"No description available." }}</p>
+                        <a href="{{ article.url }}" target="_blank" class="btn btn-primary news-btn">Read More</a>
+                        <p class="card-text text-muted mt-2">
+                            <small>Published: {{ article.publishedAt|date:"Y-m-d H:i" }} | Source: {{ article.source.name }}</small>
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+                No news articles available. Please try a different category or country.
+            </div>
+        {% endif %}
+        <div class="mt-3">
+            <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,15 +1,26 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 import requests
+from .forms import CalcForm, TaskForm, CurrencyForm  
 import random
 from django.core.cache import cache
 from .models import Task
 import os
 import logging
+from datetime import date, datetime
+
+
 
 logger = logging.getLogger(__name__)
 
-# List of Nigerian funny and motivational quotes (deduplicated)
+EVENTBRITE_CATEGORIES = {
+    'music': '103',
+    'business': '101',
+    'food_drink': '110',
+    'arts': '105',
+}
+
+# List of Nigerian funny and motivational quotes 
 quotes = [
     {"text": "No matter how long the rain lasts, the sun will shine again.", "author": "Nigerian Proverb"},
     {"text": "Life is like palm oil, it spreads everywhere.", "author": "Nigerian Saying"},
@@ -79,14 +90,12 @@ def home(request):
     weather_data = cache.get(cache_key)
     if not weather_data:
         try:
-            # Get user's public IP
             user_ip = (
                 request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
                 or request.META.get('REMOTE_ADDR')
             )
             logger.debug(f"Detected IP: {user_ip}")
 
-            # Use external service for local testing
             if user_ip in ('127.0.0.1', 'localhost'):
                 try:
                     ip_response = requests.get('https://api.ipify.org?format=json', timeout=5)
@@ -96,10 +105,8 @@ def home(request):
                 except Exception as e:
                     logger.error(f"Error fetching public IP: {e}")
 
-            # Fetch location data
             location_data = fetch_location_data(ipinfo_api_token, user_ip)
 
-            # Default to Lagos if location unavailable
             if not location_data:
                 location_data = {
                     'city': 'Lagos',
@@ -111,10 +118,15 @@ def home(request):
             lat = location_data['lat']
             lon = location_data['lon']
 
-            # Fetch weather data
             weather_data = fetch_weather_data(openweathermap_api_key, lat, lon)
 
-            # Cache for 10 minutes
+            if not weather_data:
+                weather_data = {
+                    'name': 'Lagos',
+                    'main': {'temp': 'N/A'},
+                    'weather': [{'description': 'Unable to fetch weather data', 'icon': 'unknown'}],
+                }
+
             cache.set(cache_key, weather_data, timeout=600)
         except Exception as e:
             logger.error(f"Error in weather fetch: {e}")
@@ -124,18 +136,54 @@ def home(request):
                 'weather': [{'description': 'Unable to fetch weather data', 'icon': 'unknown'}],
             }
 
+    # Fetch today's holidays
+    today = date.today()
+    year = today.year
+    holidays = []
+    countries = [
+        ('NG', 'Nigeria'),
+        ('US', 'United States'),
+        ('GB', 'United Kingdom'),
+        ('CA', 'Canada'),
+    ]
+
+    for country_code, country_name in countries:
+        try:
+            print(f"Requesting Holidays: https://date.nager.at/api/v3/publicholidays/{year}/{country_code}")
+            response = requests.get(
+                f"https://date.nager.at/api/v3/publicholidays/{year}/{country_code}",
+                timeout=5
+            )
+            response.raise_for_status()
+            country_holidays = response.json()
+            for holiday in country_holidays:
+                if holiday['date'] == str(today):
+                    holidays.append({
+                        'name': holiday['localName'],
+                        'country': country_name,
+                        'is_ng': country_code == 'NG',
+                    })
+        except requests.RequestException as e:
+            logger.error(f"Error fetching holidays for {country_code}: {e}")
+
+    # Sort holidays: Nigeria first
+    holidays.sort(key=lambda x: (not x['is_ng'], x['country']))
+
     context = {
         'quote': random_quote,
         'weather': weather_data,
+        'holidays': holidays,
+        'today': today,
     }
     return render(request, 'calcapp/home.html', context)
 
 def calc(request):
+    form = CalcForm(request.POST or None)
     result = None
-    if request.method == 'POST':
-        num1 = float(request.POST.get('num1'))
-        num2 = float(request.POST.get('num2'))
-        operation = request.POST.get('operation')
+    if request.method == 'POST' and form.is_valid():
+        num1 = form.cleaned_data['num1']
+        num2 = form.cleaned_data['num2']
+        operation = form.cleaned_data['operation']
         if operation == 'add':
             result = num1 + num2
         elif operation == 'subtract':
@@ -143,19 +191,113 @@ def calc(request):
         elif operation == 'multiply':
             result = num1 * num2
         elif operation == 'divide':
-            result = num1 / num2 if num2 != 0 else "Error: Division by zero"
-    return render(request, 'calcapp/calc.html', {'result': result})
+            result = num1 / num2 if num2 != 0 else 'Error: Division by zero'
+    return render(request, 'calcapp/calc.html', {'form': form, 'result': result})
 
 def todolist(request):
-    if request.method == 'POST':
-        task_description = request.POST.get('task')
-        if task_description:
-            Task.objects.create(description=task_description)
-            return redirect('todolist')
     tasks = Task.objects.all()
-    return render(request, 'calcapp/todolist.html', {'tasks': tasks})
+    form = TaskForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('todolist')
+    return render(request, 'calcapp/todolist.html', {'tasks': tasks, 'form': form})
 
 def delete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
-    task.delete()
+    if request.method == 'POST':
+        task = Task.objects.get(id=task_id)
+        task.delete()
     return redirect('todolist')
+
+
+def currency(request):
+    form = CurrencyForm(request.POST or None)
+    result = None
+    from_currency = None
+    to_currency = None
+    amount = None
+    api_key = os.getenv('EXCHANGERATE_API_KEY')
+
+    if request.method == 'POST' and form.is_valid():
+        amount = form.cleaned_data['amount']
+        from_currency = form.cleaned_data['from_currency']
+        to_currency = form.cleaned_data['to_currency']
+        try:
+            response = requests.get(
+                f'https://api.exchangerate-api.com/v4/latest/{from_currency}',
+                timeout=5
+            )
+            response.raise_for_status()
+            data = response.json()
+            rate = data['rates'].get(to_currency)
+            if rate:
+                result = round(amount * rate, 2)
+            else:
+                form.add_error(None, 'Invalid currency pair.')
+        except requests.RequestException as e:
+            form.add_error(None, f'API error: {str(e)}')
+
+    return render(request, 'calcapp/currency.html', {
+        'form': form,
+        'result': result,
+        'from_currency': from_currency,
+        'to_currency': to_currency,
+        'amount': amount
+    })
+
+
+def news(request):
+    api_key = os.getenv('NEWSAPI_KEY')
+    category = request.GET.get('category', 'general')
+    country = request.GET.get('country', '')  # Default to no country
+    articles = []
+    error = None
+    def fetch_news(country_param, category_param):
+        url = f'https://newsapi.org/v2/top-headlines?category={category_param}&apiKey={api_key}'
+        if country_param:
+            url += f'&country={country_param}'
+        print(f"Requesting NewsAPI: {url}")
+        try:
+            response = requests.get(url, url, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            print(f"Response: {data}")
+            return data.get('articles', [])[:5], None  # Limit to 5
+        except requests.RequestException as e:
+            print(f"Error: {str(e)}")
+            return [], str(e)
+
+    # Try with selected country (if any)
+    if api_key:
+        articles, error = fetch_news(country, category)
+        # Fallback to global if no articles or error
+        if not articles and country:
+            print("Falling back to global news")
+            articles, error = fetch_news('', category)
+    else:
+        error = "News API key is missing."
+
+    countries = [
+        ('', 'Global'),
+        ('ng', 'Nigeria'),
+        ('us', 'United States'),
+        ('gb', 'United Kingdom'),
+    ]
+    categories = [
+        ('general', 'General'),
+        ('business', 'Business'),
+        ('technology', 'Technology'),
+        ('sports', 'Sports'),
+        ('entertainment', 'Entertainment'),
+    ]
+
+    return render(request, 'calcapp/news.html', {
+        'articles': articles,
+        'error': error,
+        'current_category': category,
+        'current_country': country,
+        'categories': categories,
+        'countries': countries,
+    })
+
+def tictactoe(request):
+    return render(request, 'calcapp/tictactoe.html')

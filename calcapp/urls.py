@@ -7,4 +7,7 @@ urlpatterns = [
     path('calc/', views.calc, name='calc'),
     path('todolist/', views.todolist, name='todolist'),
     path('delete_task/<int:task_id>/', views.delete_task, name='delete_task'),
+    path('currency/', views.currency, name='currency'),
+    path('news/', views.news, name='news'),
+    path('tictactoe/', views.tictactoe, name='tictactoe'),
 ]
