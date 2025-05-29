@@ -390,6 +390,20 @@ body {
     width: 100%; /* Ensure full width for centering */
 }
 
+.news-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .news-card-link:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    .news-card-link:hover .card {
+        background-color: #444;
+    }
+
 .news-section .content {
     width: 400px; /* Match quote card width */
     max-width: 400px; /* Prevent overflow */
