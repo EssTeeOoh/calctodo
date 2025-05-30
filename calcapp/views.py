@@ -308,7 +308,10 @@ def crypto(request):
     coins = cache.get(cache_key)
     error = None
 
-    if not coins:
+    if coins:
+        logger.debug("Crypto data served from cache")
+    else:
+        logger.debug("Crypto data cache miss, fetching from CoinGecko")
         try:
             response = requests.get(
                 'https://api.coingecko.com/api/v3/coins/markets',
@@ -325,7 +328,8 @@ def crypto(request):
             )
             response.raise_for_status()
             coins = response.json()
-            cache.set(cache_key, coins, timeout=180)  # Cache for 5 minutes
+            cache.set(cache_key, coins, timeout=1800)  # Cache for 30 minutes
+            logger.debug("Crypto data cached successfully")
         except requests.RequestException as e:
             logger.error(f"Error fetching crypto data: {e}")
             coins = []
@@ -333,5 +337,6 @@ def crypto(request):
 
     return render(request, 'calcapp/crypto.html', {
         'coins': coins,
-        'error': error if not coins else None
+        'error': error if not coins else None,
+        'cache_status': 'Cached' if cache.get(cache_key) else 'Fetched'
     })
