@@ -9,7 +9,9 @@ import os
 import logging
 from datetime import date, datetime
 from django.core.cache import cache
-
+import random
+import base64
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 
 logger = logging.getLogger(__name__)
@@ -303,40 +305,76 @@ def news(request):
 def tictactoe(request):
     return render(request, 'calcapp/tictactoe.html')
 
-def crypto(request):
-    cache_key = 'crypto_data'
-    coins = cache.get(cache_key)
+
+def trivia(request):
+    cache_key = 'trivia_questions'
+    questions = []
     error = None
+    score = None
+    user_answers = None
 
-    if coins:
-        logger.debug("Crypto data served from cache")
-    else:
-        logger.debug("Crypto data cache miss, fetching from CoinGecko")
+    if request.method == 'POST':
+        user_answers = {k: v for k, v in request.POST.items() if k.startswith('answer_')}
+        questions = cache.get(cache_key)
+        if questions:
+            score = 0
+            for i, q in enumerate(questions):
+                correct_answer = q['correct_answer']
+                user_answer = user_answers.get(f'answer_{i}')
+                if user_answer == correct_answer:
+                    score += 1
+        else:
+            error = "Questions expired. Please start a new quiz."
+
+    # Handle GET (new quiz or "Play Again")
+    if request.method == 'GET' or score is not None or error:
+        cache.delete(cache_key)  # Clear cache for fresh questions
         try:
-            response = requests.get(
-                'https://api.coingecko.com/api/v3/coins/markets',
-                params={
-                    'vs_currency': 'usd',
-                    'ids': 'bitcoin,ethereum,tether,binancecoin,solana',
-                    'order': 'market_cap_desc',
-                    'per_page': 5,
-                    'page': 1,
-                    'sparkline': 'false',
-                    'price_change_percentage': '24h'
-                },
-                timeout=5
+            @retry(
+                stop=stop_after_attempt(3),
+                wait=wait_exponential(multiplier=1, min=2, max=6),
+                retry=retry_if_exception_type(requests.exceptions.RequestException)
             )
-            response.raise_for_status()
-            coins = response.json()
-            cache.set(cache_key, coins, timeout=1800)  # Cache for 30 minutes
-            logger.debug("Crypto data cached successfully")
-        except requests.RequestException as e:
-            logger.error(f"Error fetching crypto data: {e}")
-            coins = []
-            error = "Unable to fetch crypto data. Please try again later."
+            def fetch_trivia_questions():
+                response = requests.get(
+                    'https://opentdb.com/api.php',
+                    params={
+                        'amount': 5,
+                        'type': 'multiple',
+                        'encode': 'base64'
+                    },
+                    timeout=5
+                )
+                response.raise_for_status()
+                return response.json()
 
-    return render(request, 'calcapp/crypto.html', {
-        'coins': coins,
-        'error': error if not coins else None,
-        'cache_status': 'Cached' if cache.get(cache_key) else 'Fetched'
+            data = fetch_trivia_questions()
+            if data['response_code'] == 0:
+                questions = []
+                for q in data['results']:
+                    question_text = base64.b64decode(q['question']).decode('utf-8')
+                    correct_answer = base64.b64decode(q['correct_answer']).decode('utf-8')
+                    incorrect_answers = [base64.b64decode(ans).decode('utf-8') for ans in q['incorrect_answers']]
+                    all_answers = incorrect_answers + [correct_answer]
+                    random.shuffle(all_answers)
+                    questions.append({
+                        'question': question_text,
+                        'correct_answer': correct_answer,
+                        'answers': all_answers
+                    })
+                cache.set(cache_key, questions, timeout=300)  # Cache for 5 minutes
+                logger.debug("Fetched and cached new trivia questions")
+            else:
+                error = "Unable to fetch trivia questions. Please try again later."
+                logger.error(f"Open Trivia DB API response code: {data['response_code']}")
+        except requests.RequestException as e:
+            error = "Unable to fetch trivia questions. Please try again later."
+            logger.error(f"Error fetching trivia data: {e}")
+
+    return render(request, 'calcapp/trivia.html', {
+        'questions': questions,
+        'error': error,
+        'score': score,
+        'total': len(questions) if questions else 0,
+        'user_answers': user_answers
     })

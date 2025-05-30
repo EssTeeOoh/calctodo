@@ -10,5 +10,5 @@ urlpatterns = [
     path('currency/', views.currency, name='currency'),
     path('news/', views.news, name='news'),
     path('tictactoe/', views.tictactoe, name='tictactoe'),
-    path('crypto/', views.crypto, name='crypto'),
+    path('trivia/', views.trivia, name='trivia'),
 ]

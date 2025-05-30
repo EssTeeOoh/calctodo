@@ -94,8 +94,12 @@ DATABASES = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'cache'),  # Absolute path in project directory
+        'TIMEOUT': 300,  # 5 minutes for trivia
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
     }
 }
 
