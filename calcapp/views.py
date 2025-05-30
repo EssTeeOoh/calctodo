@@ -8,6 +8,7 @@ from .models import Task
 import os
 import logging
 from datetime import date, datetime
+from django.core.cache import cache
 
 
 
@@ -303,28 +304,34 @@ def tictactoe(request):
     return render(request, 'calcapp/tictactoe.html')
 
 def crypto(request):
-      try:
-          response = requests.get(
-              'https://api.coingecko.com/api/v3/coins/markets',
-              params={
-                  'vs_currency': 'usd',
-                  'ids': 'bitcoin,ethereum,tether,binancecoin,solana',
-                  'order': 'market_cap_desc',
-                  'per_page': 5,
-                  'page': 1,
-                  'sparkline': 'false',
-                  'price_change_percentage': '24h'
-              },
-              timeout=5
-          )
-          response.raise_for_status()
-          coins = response.json()
-      except requests.RequestException as e:
-          logger.error(f"Error fetching crypto data: {e}")
-          coins = []
-          error = "Unable to fetch crypto data. Please try again later."
+    cache_key = 'crypto_data'
+    coins = cache.get(cache_key)
+    error = None
 
-      return render(request, 'calcapp/crypto.html', {
-          'coins': coins,
-          'error': error if not coins else None
-      })
+    if not coins:
+        try:
+            response = requests.get(
+                'https://api.coingecko.com/api/v3/coins/markets',
+                params={
+                    'vs_currency': 'usd',
+                    'ids': 'bitcoin,ethereum,tether,binancecoin,solana',
+                    'order': 'market_cap_desc',
+                    'per_page': 5,
+                    'page': 1,
+                    'sparkline': 'false',
+                    'price_change_percentage': '24h'
+                },
+                timeout=5
+            )
+            response.raise_for_status()
+            coins = response.json()
+            cache.set(cache_key, coins, timeout=180)  # Cache for 5 minutes
+        except requests.RequestException as e:
+            logger.error(f"Error fetching crypto data: {e}")
+            coins = []
+            error = "Unable to fetch crypto data. Please try again later."
+
+    return render(request, 'calcapp/crypto.html', {
+        'coins': coins,
+        'error': error if not coins else None
+    })
