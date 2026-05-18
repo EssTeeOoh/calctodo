@@ -5,37 +5,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MultiApp{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}MultiApp offers practical browser tools like a calculator, to-do list, weather, trivia, currency conversion, and news in one place.{% endblock %}">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    <meta property="og:site_name" content="MultiApp">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{% block title_og_fallback %}MultiApp{% endblock %}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{% block meta_description_og_fallback %}MultiApp offers practical browser tools like a calculator, to-do list, weather, trivia, currency conversion, and news in one place.{% endblock %}{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{% block title_twitter_fallback %}MultiApp{% endblock %}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{% block meta_description_twitter_fallback %}MultiApp offers practical browser tools like a calculator, to-do list, weather, trivia, currency conversion, and news in one place.{% endblock %}{% endblock %}">
     <link rel="shortcut icon" href="{% static 'calcapp/favicon/favicon.ico' %}" type="image/x-icon">
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'calcapp/css/styles.css' %}">
 </head>
 <body>
-    <!-- Header -->
     <header class="site-header">
-        <div class="header-content">
-            <h1>{% block header_title %}CalcApp{% endblock %}</h1>
+        <div class="header-shell">
+            <a href="{% url 'home' %}" class="brand-mark">
+                <span class="brand-kicker">Utility Suite</span>
+                <span class="brand-title">MultiApp</span>
+            </a>
+            <nav class="site-nav" aria-label="Primary">
+                <a href="{% url 'calc' %}">Calculator</a>
+                <a href="{% url 'todolist' %}">To-Do</a>
+                <a href="{% url 'currency' %}">Currency</a>
+                <a href="{% url 'news' %}">News</a>
+                <a href="{% url 'trivia' %}">Trivia</a>
+                <a href="{% url 'tictactoe' %}">Tic-Tac-Toe</a>
+            </nav>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
-        {% block content %}
-        {% endblock %}
+        <section class="page-shell">
+            <div class="page-hero">
+                <p class="page-eyebrow">Fast tools. Cleaner flow.</p>
+                <h1>{% block header_title %}CalcApp{% endblock %}</h1>
+                {% block seo_intro %}{% endblock %}
+            </div>
+            {% block content %}
+            {% endblock %}
+        </section>
     </main>
 
-    <!-- Footer -->
     <footer class="site-footer">
-        <div class="footer-content">
-            <p class="mb-1">© <span id="current-year">2025</span> CalcApp. Designed by <a href="https://portfolio-4yfm.onrender.com/" target="_blank">Samuel Olu</a></p>
+        <div class="footer-shell">
+            <p class="mb-1">&copy; <span id="current-year">2025</span> MultiApp. Designed by <a href="https://portfolio-4yfm.onrender.com/" target="_blank" rel="noopener noreferrer">Samuel Olu</a></p>
+            <p class="footer-note mb-0">A compact hub for everyday tools, quick updates, and a little fun.</p>
         </div>
     </footer>
 
-    <!-- Bootstrap JS and Popper -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
-    <!-- Year Update Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const yearElement = document.getElementById('current-year');

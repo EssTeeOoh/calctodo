@@ -2,94 +2,118 @@
 {% load static %}
 
 {% block title %}Home{% endblock %}
+{% block meta_description %}Explore MultiApp, a fast all-in-one tool hub with weather updates, a calculator, to-do list, trivia, news, currency conversion, and more.{% endblock %}
 {% block header_title %}MultiApp{% endblock %}
 
 {% block content %}
-<!-- Holiday Section -->
-{% if holidays %}
-    <section class="holiday-section mb-3">
-        <div class="content text-center mx-auto">
-            <h2 class="section-title text-center">Today’s Celebrations</h2>
-            {% for holiday in holidays %}
-                <div class="card bg-dark text-light mb-2 mx-auto">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ holiday.name }}</h5>
-                        <p class="card-text">Celebrated in {{ holiday.country }}</p>
-                        <p class="card-text text-muted">
-                            <small>Date: {{ today|date:"Y-m-d" }}</small>
-                        </p>
-                    </div>
-                </div>
-            {% endfor %}
+<section class="dashboard-grid">
+    <div class="feature-panel hero-panel">
+        <div class="hero-copy">
+            <p class="hero-kicker">Daily snapshot</p>
+            <h2>Everything you need in one calm, fast dashboard.</h2>
+            <p class="hero-text">Check the weather, see today's celebrations, and jump straight into the tools that matter.</p>
         </div>
-    </section>
-{% endif %}
-
-<!-- Quote Section -->
-<section class="quote-section mb-3">
-    <div id="quote-box" class="card bg-dark text-light mx-auto">
-        <h2 class="card-title text-center">Inspiration for Today</h2>
-        <blockquote class="blockquote text-center">
-            <p class="mb-0">"{{ quote.text }}"</p>
-            <footer class="blockquote-footer text-light mt-2">— {{ quote.author }}</footer>
-        </blockquote>
+        <div class="quick-links">
+            <a href="{% url 'calc' %}" class="action-chip">Calculator</a>
+            <a href="{% url 'todolist' %}" class="action-chip">To-Do List</a>
+            <a href="{% url 'currency' %}" class="action-chip">Currency</a>
+            <a href="{% url 'news' %}" class="action-chip">News</a>
+            <a href="{% url 'trivia' %}" class="action-chip">Trivia</a>
+            <a href="{% url 'tictactoe' %}" class="action-chip">Tic-Tac-Toe</a>
+        </div>
     </div>
-</section>
 
-<!-- Weather Section -->
-<section class="weather-section mb-3">
-    <div class="weather-content text-center mx-auto">
-        <h2 class="section-title text-center">Weather in {{ weather.name }}</h2>
+    <div class="feature-panel weather-panel">
+        <div class="panel-heading">
+            <p class="panel-eyebrow">{% if using_manual_weather_location %}Selected weather{% else %}Local weather{% endif %}</p>
+            <h3>Weather in {{ weather.name }}</h3>
+        </div>
+        <form method="get" class="weather-picker">
+            <div>
+                <label for="city" class="form-label mb-1">Choose a city manually</label>
+                <select id="city" name="city" class="form-select app-select">
+                    <option value="">Auto-detect my location</option>
+                    {% for value, label in weather_locations %}
+                        <option value="{{ value }}"{% if selected_weather_location == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary app-btn">Update</button>
+        </form>
         {% if weather.main and weather.main.temp != 'N/A' %}
-            <p class="mb-1">Temperature: {{ weather.main.temp }}°C</p>
+            <p class="stat-value">{{ weather.main.temp }}&deg;C</p>
         {% else %}
-            <p class="mb-1">Temperature: N/A</p>
+            <p class="stat-value">N/A</p>
         {% endif %}
         {% if weather.weather and weather.weather.0.icon != 'unknown' %}
-            <p class="mb-0">
-                Weather: {{ weather.weather.0.description }}
-                <br>
-                <img src="http://openweathermap.org/img/wn/{{ weather.weather.0.icon }}@2x.png" alt="{{ weather.weather.0.description }}" class="weather-icon">
-            </p>
+            <div class="weather-meta">
+                <img src="https://openweathermap.org/img/wn/{{ weather.weather.0.icon }}@2x.png" alt="{{ weather.weather.0.description }}" class="weather-icon">
+                <span>{{ weather.weather.0.description|title }}</span>
+            </div>
         {% else %}
-            <p class="mb-0">Weather: N/A</p>
+            <p class="muted-copy mb-0">Weather details are unavailable right now.</p>
+        {% endif %}
+        {% if using_manual_weather_location %}
+            <p class="muted-copy weather-note mb-0">Manual city mode is active.</p>
+        {% endif %}
+    </div>
+
+    <div id="quote-box" class="feature-panel quote-panel">
+        <div class="panel-heading">
+            <p class="panel-eyebrow">Fresh motivation</p>
+            <h3>Inspiration for today</h3>
+        </div>
+        <blockquote class="quote-block">
+            <p>"{{ quote.text }}"</p>
+            <footer>{{ quote.author }}</footer>
+        </blockquote>
+    </div>
+
+    <div class="feature-panel holiday-panel">
+        <div class="panel-heading">
+            <p class="panel-eyebrow">On the calendar</p>
+            <h3>Today's celebrations</h3>
+        </div>
+        {% if holidays %}
+            <div class="stack-list">
+                {% for holiday in holidays %}
+                    <article class="mini-card">
+                        <h4>{{ holiday.name }}</h4>
+                        <p>Celebrated in {{ holiday.country }}</p>
+                        <span>{{ today|date:"F j, Y" }}</span>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="muted-copy mb-0">No featured celebrations found for today.</p>
         {% endif %}
     </div>
 </section>
+{% endblock %}
 
-<!-- Options Section -->
-<section class="options-section mb-3">
-    <div class="options-content text-center mx-auto">
-        <h2 class="section-title text-center">Options</h2>
-        <div class="d-flex flex-column gap-2 align-items-center">
-            <a href="{% url 'calc' %}" class="btn btn-primary option-btn">Go to Calculator</a>
-            <a href="{% url 'todolist' %}" class="btn btn-primary option-btn">To-Do List</a>
-            <a href="{% url 'trivia' %}" class="btn btn-primary option-btn">Trivia Quiz</a>
-            <a href="{% url 'currency' %}" class="btn btn-primary option-btn">Currency Converter</a>
-            <a href="{% url 'news' %}" class="btn btn-primary option-btn">News Headlines</a>
-            <a href="{% url 'tictactoe' %}" class="btn btn-primary option-btn">Tic-Tac-Toe</a>
-        </div>
-    </div>
-</section>
-
+{% block extra_js %}
 <script>
     async function fetchNewQuote() {
         try {
             const response = await fetch("{% url 'home' %}", {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                headers: { "X-Requested-With": "XMLHttpRequest" }
             });
             const data = await response.json();
             document.getElementById("quote-box").innerHTML = `
-                <h2 class="card-title text-center">Inspiration for Today</h2>
-                <blockquote class="blockquote text-center">
-                    <p class="mb-0">"${data.text}"</p>
-                    <footer class="blockquote-footer text-light mt-2">— ${data.author}</footer>
+                <div class="panel-heading">
+                    <p class="panel-eyebrow">Fresh motivation</p>
+                    <h3>Inspiration for today</h3>
+                </div>
+                <blockquote class="quote-block">
+                    <p>"${data.text}"</p>
+                    <footer>${data.author}</footer>
                 </blockquote>
             `;
         } catch (error) {
             console.error("Error fetching new quote:", error);
         }
     }
+
     setInterval(fetchNewQuote, 10000);
 </script>
 {% endblock %}

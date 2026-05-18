@@ -1,55 +1,66 @@
 {% extends 'calcapp/base.html' %}
 {% load static %}
 
-{% block title %}News{% endblock %}
+{% block title %}Top News Headlines | MultiApp{% endblock %}
+{% block meta_description %}Browse top news headlines by category and region in a fast, clean, mobile-friendly news page.{% endblock %}
 {% block header_title %}News{% endblock %}
 
 {% block content %}
-
-<section class="news-section mb-4">
-    <div class="content text-center mx-auto" style="max-width: 400px;">
-        <h2 class="section-title text-center mb-3">Top News Stories</h2>
-        <!-- Filters -->
-        <div class="mb-3">
-            <div class="d-flex flex-wrap justify-content-center gap-2 mb-2">
+<section class="tool-layout">
+    <div class="feature-panel">
+        <div class="panel-heading">
+            <p class="panel-eyebrow">Daily briefing</p>
+            <h2>Top News Stories</h2>
+            <p class="muted-copy">Switch categories and regions to scan the headlines quickly.</p>
+        </div>
+        <div class="filter-stack mb-4">
+            <div class="d-flex flex-wrap gap-2">
                 {% for cat_value, cat_name in categories %}
                     <a href="{% url 'news' %}?category={{ cat_value }}{% if current_country %}&country={{ current_country }}{% endif %}"
-                       class="btn {% if current_category == cat_value %}btn-primary{% else %}btn-secondary{% endif %} news-btn">
+                       class="btn {% if current_category == cat_value %}btn-primary{% else %}btn-outline-light{% endif %} news-btn">
                         {{ cat_name }}
                     </a>
                 {% endfor %}
             </div>
-        
+            <form method="get" class="country-filter">
+                <input type="hidden" name="category" value="{{ current_category }}">
+                <label for="country" class="form-label mb-1">Region</label>
+                <select id="country" name="country" class="form-select app-select" onchange="this.form.submit()">
+                    {% for country_value, country_name in countries %}
+                        <option value="{{ country_value }}"{% if current_country == country_value %} selected{% endif %}>{{ country_name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
-        <!-- News Articles -->
         {% if error %}
-            <div class="alert alert-warning" role="alert">
+            <div class="result-banner error-banner" role="alert">
                 {{ error }}
                 {% if error == "News API key is missing." %}
-                    <p>Please contact the administrator.</p>
+                    <p class="mb-0 mt-2">Please contact the administrator.</p>
                 {% else %}
-                    <p>Showing global news due to limited availability for the selected country.</p>
+                    <p class="mb-0 mt-2">Showing global news due to limited availability for the selected country.</p>
                 {% endif %}
             </div>
         {% elif articles %}
             {% if current_country and not error %}
-                <p class="text-muted mb-3">Showing news for {{ current_country|default:"Global" }}.</p>
+                <p class="muted-copy mb-3">Showing news for {{ current_country_label }}.</p>
             {% endif %}
-            {% for article in articles %}
-                <a href="{{ article.url }}" target="_blank" class="news-card-link">
-                    <div class="card bg-dark text-light mb-3 mx-auto" style="max-width: 250px;">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ article.title }}</h5>
-                            <p class="card-text">{{ article.description|truncatewords:20|default:"No description available." }}</p>
-                            <p class="text-muted mt-2">
-                                <small>Published: {{ article.publishedAt|date:"Y-m-d H:i" }} | Source: {{ article.source.name }}</small>
-                            </p>
-                        </div>
-                    </div>
-                </a>
-            {% endfor %}
+            <div class="news-grid">
+                {% for article in articles %}
+                    <a href="{{ article.url }}" target="_blank" rel="noopener noreferrer" class="news-card-link">
+                        <article class="news-story">
+                            <p class="story-source">{{ article.source_name|default:"News Desk" }}</p>
+                            <h3>{{ article.title }}</h3>
+                            <p>{{ article.description|truncatewords:26|default:"No description available." }}</p>
+                            {% if article.published_display %}
+                                <span>{{ article.published_display }}</span>
+                            {% endif %}
+                        </article>
+                    </a>
+                {% endfor %}
+            </div>
         {% else %}
-            <div class="alert alert-warning" role="alert">
+            <div class="result-banner error-banner" role="alert">
                 No news articles available. Try a different category or country.
             </div>
         {% endif %}
@@ -57,11 +68,5 @@
             <a href="{% url 'home' %}" class="btn btn-primary">Back to Home</a>
         </div>
     </div>
-    <script>
-        function updateCountry(country) {
-            const category = new URLSearchParams(window.location.search).get('category') || 'general';
-            window.location.href = `{% url 'news' %}?category=${category}&country=${country}`;
-        }
-    </script>
 </section>
 {% endblock %}

@@ -1,36 +1,46 @@
 {% extends 'calcapp/base.html' %}
 {% load static %}
 
-{% block title %}To-Do List{% endblock %}
+{% block title %}Simple To-Do List App | MultiApp{% endblock %}
+{% block meta_description %}Track daily tasks with a clean, simple online to-do list app you can use from any browser.{% endblock %}
 {% block header_title %}To-Do List{% endblock %}
 
 {% block content %}
-<section class="todo-section mb-3">
-    <div class="content text-center mx-auto">
-        <h2 class="section-title text-center">To-Do List</h2>
-        <form method="post" class="d-flex gap-2 mb-2">
+<section class="tool-layout single-tool">
+    <div class="feature-panel">
+        <div class="panel-heading">
+            <p class="panel-eyebrow">Stay organized</p>
+            <h2>To-Do List</h2>
+            <p class="muted-copy">Capture small tasks quickly and clear them out just as fast.</p>
+        </div>
+        <form method="post" class="app-form-inline mb-3">
             {% csrf_token %}
-            <input type="text" name="task" placeholder="Add a task" required class="form-control">
-            <button type="submit" class="btn btn-primary">Add Task</button>
+            <div class="flex-grow-1">
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="text-danger mt-1">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary app-btn">Add Task</button>
         </form>
 
-        <div class="task-list">
+        <div class="task-list stack-list">
             {% if tasks %}
                 {% for task in tasks %}
-                <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-secondary bg-opacity-25 rounded">
+                <div class="task-item">
                     <p class="mb-0">{{ task.description }}</p>
-                    <form method="post" action="{% url 'delete_task' task.id %}" class="d-inline">
+                    <form method="post" action="{% url 'delete_task' task.id %}" class="d-inline-flex">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                     </form>
                 </div>
                 {% endfor %}
             {% else %}
-                <p class="text-muted mb-1">No tasks yet!</p>
+                <p class="muted-copy mb-1">No tasks yet. Add your first one above.</p>
             {% endif %}
         </div>
 
-        <div>
+        <div class="mt-3">
             <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
         </div>
     </div>
