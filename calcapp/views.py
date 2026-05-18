@@ -160,7 +160,7 @@ def fetch_weather_for_location(location):
 
 def render_page(request, template_name, context, seo_title):
     response = render(request, template_name, context)
-    response.seo_title = seo_title
+    setattr(response, "seo_title", seo_title)
     return response
 
 
